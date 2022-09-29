@@ -9,6 +9,16 @@
 #include "Graphics/Backend/Device.h"
 #include "Application.h"
 #include "Window.h"
+#include "Scene/Camera.h"
+
+#include "ResourceLoader.h"
+
+struct ViewData
+{
+	glm::mat4 ViewProjection;
+	glm::vec4 ViewOriginAndTanHalfFovY;
+	glm::vec2 Resolution;
+};
 
 struct RendererInternalData
 {
@@ -23,10 +33,13 @@ struct RendererInternalData
 	std::unique_ptr<Buffer> BLASBuffer;
 
 	// Test Vertex and index buffer
-	std::unique_ptr<Buffer> VertexBuffer;
-	std::unique_ptr<Buffer> IndexBuffer;
+	std::shared_ptr<Buffer> VertexBuffer;
+	std::shared_ptr<Buffer> IndexBuffer;
 
-	std::unique_ptr<RenderPass> RenderPass = nullptr;
+	std::unique_ptr<RenderPass> RenderPass;
+
+	ViewData ViewData;
+	std::unique_ptr<Buffer> ViewConstantBuffer;
 
 	struct Resolution
 	{
@@ -46,6 +59,8 @@ void Renderer::Initialize(uint32_t resX, uint32_t resY)
 
 	RenderBackend::Initialize(Application::Get().GetWindow().GetHandle(), s_Data.Resolution.x, s_Data.Resolution.y);
 
+	s_Data.ViewConstantBuffer = std::make_unique<Buffer>("View constant buffer", BufferDesc(BufferUsage::BUFFER_USAGE_CONSTANT, 1, sizeof(ViewData)));
+
 	CreateRenderPasses();
 
 	CreateBLAS();
@@ -57,15 +72,15 @@ void Renderer::Finalize()
 	RenderBackend::Finalize();
 }
 
-void Renderer::BeginScene()
+void Renderer::BeginScene(const Camera& sceneCamera)
 {
-	/*auto commandList = RenderBackend::GetCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	// Set view data and view constant buffer data
+	s_Data.ViewData.ViewProjection = sceneCamera.GetViewProjection();
+	s_Data.ViewData.ViewOriginAndTanHalfFovY = glm::vec4(s_Data.ViewData.ViewProjection[3].x,
+		s_Data.ViewData.ViewProjection[3].y, s_Data.ViewData.ViewProjection[3].z, 0.0f);
+	s_Data.ViewData.Resolution = glm::vec2(s_Data.Resolution.x, s_Data.Resolution.y);
 
-	glm::vec4 clearColor(0.2f, 0.2f, 0.2f, 1.0f);
-	commandList->ClearRenderTargetView(s_Data.RenderPass->GetColorAttachment()->GetDescriptorHandle(DescriptorType::RTV), &clearColor.x);
-	commandList->ClearDepthStencilView(s_Data.RenderPass->GetDepthStencilAttachment()->GetDescriptorHandle(DescriptorType::DSV));
-
-	RenderBackend::ExecuteCommandList(commandList);*/
+	s_Data.ViewConstantBuffer->SetBufferData(&s_Data.ViewData);
 }
 
 void Renderer::Render()
@@ -132,6 +147,11 @@ void Renderer::ToggleVSync()
 	s_Data.VSync = !s_Data.VSync;
 }
 
+glm::vec2 Renderer::GetResolution()
+{
+	return glm::vec2(s_Data.Resolution.x, s_Data.Resolution.y);
+}
+
 Renderer::Renderer()
 {
 }
@@ -178,10 +198,14 @@ void Renderer::CreateBLAS()
 		0, 1, 2
 	};
 
-	s_Data.VertexBuffer = std::make_unique<Buffer>("AS test vertex buffer", BufferDesc(BufferUsage::BUFFER_USAGE_VERTEX,
+	s_Data.VertexBuffer = std::make_shared<Buffer>("AS test triangle vertex buffer", BufferDesc(BufferUsage::BUFFER_USAGE_VERTEX,
 		3, sizeof(glm::vec3)), &vertices);
-	s_Data.IndexBuffer = std::make_unique<Buffer>("AS test index buffer", BufferDesc(BufferUsage::BUFFER_USAGE_INDEX,
+	s_Data.IndexBuffer = std::make_shared<Buffer>("AS test triangle index buffer", BufferDesc(BufferUsage::BUFFER_USAGE_INDEX,
 		3, sizeof(WORD)), &indices);
+
+	/*Model model = ResourceLoader::LoadGLTF("Resources/Models/Sponza_OLD/Sponza.gltf");
+	s_Data.VertexBuffer = model.VertexBuffer;
+	s_Data.IndexBuffer = model.IndexBuffer;*/
 
 	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc = {};
 	geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;

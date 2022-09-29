@@ -177,6 +177,9 @@ copy "$(SolutionDir)dxil.dll" "$(SolutionDir)\bin\$(Platform)\$(Configuration)\"
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Source\ResourceLoader.cpp" />
+    <ClCompile Include="Source\Scene\Camera.cpp" />
+    <ClCompile Include="Source\Scene\Scene.cpp" />
     <ClCompile Include="Source\Util\Logger.cpp" />
     <ClCompile Include="Source\Util\Profiler.cpp" />
     <ClCompile Include="Source\Util\StringHelper.cpp" />
@@ -199,6 +202,9 @@ copy "$(SolutionDir)dxil.dll" "$(SolutionDir)\bin\$(Platform)\$(Configuration)\"
     <ClInclude Include="Header\Graphics\Texture.h" />
     <ClInclude Include="Header\Pch.h" />
     <ClInclude Include="Header\Application.h" />
+    <ClInclude Include="Header\ResourceLoader.h" />
+    <ClInclude Include="Header\Scene\Camera.h" />
+    <ClInclude Include="Header\Scene\Scene.h" />
     <ClInclude Include="Header\Util\Logger.h" />
     <ClInclude Include="Header\Util\MathHelper.h" />
     <ClInclude Include="Header\Util\Profiler.h" />

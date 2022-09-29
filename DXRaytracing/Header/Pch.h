@@ -34,7 +34,7 @@
 #include <glm/glm/gtc/matrix_transform.hpp>
 #include <glm/glm/gtc/quaternion.hpp>
 
-#define ASSERT(x, y) if (!(x)) { printf(y); assert(false); }
+#define ASSERT(x, y) if (!(x)) { LOG_ERR(y); assert(false); }
 
 constexpr boolean GPU_VALIDATION_ENABLED = false;
 

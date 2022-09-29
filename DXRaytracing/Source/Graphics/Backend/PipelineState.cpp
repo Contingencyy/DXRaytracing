@@ -46,11 +46,12 @@ void PipelineState::CreateRootSignatures()
 	// Local Root Signature
 	// This is a root signature that enables a shader to have unique arguments that come from shader tables.
 	{
-		CD3DX12_DESCRIPTOR_RANGE descriptorRange[2] = {};
-		descriptorRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, 1); // Output
-		descriptorRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, 6); // Acceleration structure
+		CD3DX12_DESCRIPTOR_RANGE descriptorRange[3] = {};
+		descriptorRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, 0); // View constant buffer
+		descriptorRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, 2); // Output
+		descriptorRange[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, 7); // Acceleration structure
 		CD3DX12_ROOT_PARAMETER rootParameters[1] = {};
-		rootParameters[0].InitAsDescriptorTable(2, &descriptorRange[0]);
+		rootParameters[0].InitAsDescriptorTable(3, &descriptorRange[0]);
 		CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
 		localRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
