@@ -172,6 +172,7 @@ copy "$(SolutionDir)dxil.dll" "$(SolutionDir)\bin\$(Platform)\$(Configuration)\"
     <ClCompile Include="Source\Graphics\Shader.cpp" />
     <ClCompile Include="Source\Graphics\Backend\SwapChain.cpp" />
     <ClCompile Include="Source\Graphics\Texture.cpp" />
+    <ClCompile Include="Source\InputHandler.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\Pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -180,6 +181,7 @@ copy "$(SolutionDir)dxil.dll" "$(SolutionDir)\bin\$(Platform)\$(Configuration)\"
     <ClCompile Include="Source\ResourceLoader.cpp" />
     <ClCompile Include="Source\Scene\Camera.cpp" />
     <ClCompile Include="Source\Scene\Scene.cpp" />
+    <ClCompile Include="Source\Transform.cpp" />
     <ClCompile Include="Source\Util\Logger.cpp" />
     <ClCompile Include="Source\Util\Profiler.cpp" />
     <ClCompile Include="Source\Util\StringHelper.cpp" />
@@ -200,11 +202,13 @@ copy "$(SolutionDir)dxil.dll" "$(SolutionDir)\bin\$(Platform)\$(Configuration)\"
     <ClInclude Include="Header\Graphics\Shader.h" />
     <ClInclude Include="Header\Graphics\Backend\SwapChain.h" />
     <ClInclude Include="Header\Graphics\Texture.h" />
+    <ClInclude Include="Header\InputHandler.h" />
     <ClInclude Include="Header\Pch.h" />
     <ClInclude Include="Header\Application.h" />
     <ClInclude Include="Header\ResourceLoader.h" />
     <ClInclude Include="Header\Scene\Camera.h" />
     <ClInclude Include="Header\Scene\Scene.h" />
+    <ClInclude Include="Header\Transform.h" />
     <ClInclude Include="Header\Util\Logger.h" />
     <ClInclude Include="Header\Util\MathHelper.h" />
     <ClInclude Include="Header\Util\Profiler.h" />

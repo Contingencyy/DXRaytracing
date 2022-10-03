@@ -5,11 +5,11 @@ struct DefaultRayPayload
 
 struct BuiltinIntersectAttribs
 {
-	uint2 barycentrics;
+	uint2 Barycentrics;
 };
 
 [shader("closesthit")]
 void main(inout DefaultRayPayload payload, BuiltinIntersectAttribs attribs)
 {
-	payload.Color = float3(0.8f, 0.8f, 0.1f);
+	payload.Color = float3(attribs.Barycentrics.x, attribs.Barycentrics.y, 0.0f);
 }

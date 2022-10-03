@@ -2,7 +2,7 @@
 #include "Window.h"
 #include "Application.h"
 #include "Graphics/Renderer.h"
-//#include "InputHandler.h"
+#include "InputHandler.h"
 
 #include <windowsx.h>
 
@@ -39,7 +39,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     Renderer::ToggleVSync();
                     break;
                 default:
-                    //InputHandler::OnKeyPressed(InputHandler::WParamToKeyCode(wParam));
+                    InputHandler::OnKeyPressed(InputHandler::WParamToKeyCode(wParam));
                     break;
                 }
             }
@@ -51,7 +51,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 switch (wParam)
                 {
                 default:
-                    //InputHandler::OnKeyReleased(InputHandler::WParamToKeyCode(wParam));
+                    InputHandler::OnKeyReleased(InputHandler::WParamToKeyCode(wParam));
                     break;
                 }
             }
@@ -60,20 +60,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case WM_LBUTTONDOWN:
             case WM_MBUTTONDOWN:
             case WM_RBUTTONDOWN:
-                //InputHandler::OnKeyPressed(InputHandler::WParamToKeyCode(wParam));
+                InputHandler::OnKeyPressed(InputHandler::WParamToKeyCode(wParam));
                 break;
             case WM_LBUTTONUP:
-                //InputHandler::OnKeyReleased(KeyCode::LEFT_MOUSE);
+                InputHandler::OnKeyReleased(KeyCode::LEFT_MOUSE);
                 break;
             case WM_MBUTTONUP:
-                //InputHandler::OnKeyReleased(KeyCode::MIDDLE_MOUSE);
+                InputHandler::OnKeyReleased(KeyCode::MIDDLE_MOUSE);
                 break;
             case WM_RBUTTONUP:
-                //InputHandler::OnKeyReleased(KeyCode::RIGHT_MOUSE);
+                InputHandler::OnKeyReleased(KeyCode::RIGHT_MOUSE);
                 break;
 
             case WM_MOUSEMOVE:
-                //InputHandler::OnMouseMoved(glm::vec2(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
+                InputHandler::OnMouseMoved(glm::vec2(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
                 break;
 
             case WM_SIZE:

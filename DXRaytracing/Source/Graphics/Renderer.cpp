@@ -76,8 +76,8 @@ void Renderer::BeginScene(const Camera& sceneCamera)
 {
 	// Set view data and view constant buffer data
 	s_Data.ViewData.ViewProjection = sceneCamera.GetViewProjection();
-	s_Data.ViewData.ViewOriginAndTanHalfFovY = glm::vec4(s_Data.ViewData.ViewProjection[3].x,
-		s_Data.ViewData.ViewProjection[3].y, s_Data.ViewData.ViewProjection[3].z, 0.0f);
+	s_Data.ViewData.ViewOriginAndTanHalfFovY = glm::vec4(s_Data.ViewData.ViewProjection[3][0],
+		s_Data.ViewData.ViewProjection[3][1], s_Data.ViewData.ViewProjection[3][2], 1.0f);
 	s_Data.ViewData.Resolution = glm::vec2(s_Data.Resolution.x, s_Data.Resolution.y);
 
 	s_Data.ViewConstantBuffer->SetBufferData(&s_Data.ViewData);
@@ -188,24 +188,26 @@ void Renderer::CreateRenderPasses()
 void Renderer::CreateBLAS()
 {
 	// Set test data for vertex and index buffer
-	glm::vec3 vertices[3] = {
-		{ 0.0f, 0.5f, 1.0f },
+	/*glm::vec3 vertices[4] = {
+		{ -0.5f, 0.5f, 1.0f },
+		{ 0.5f, 0.5f, 1.0f },
+		{ 0.5f, -0.5f, 1.0f },
 		{ -0.5f, -0.5f, 1.0f },
-		{ 0.5f, -0.5f, 1.0f }
 	};
 
-	WORD indices[3] = {
-		0, 1, 2
+	WORD indices[6] = {
+		0, 1, 2,
+		2, 3, 0
 	};
 
 	s_Data.VertexBuffer = std::make_shared<Buffer>("AS test triangle vertex buffer", BufferDesc(BufferUsage::BUFFER_USAGE_VERTEX,
-		3, sizeof(glm::vec3)), &vertices);
+		4, sizeof(glm::vec3)), &vertices);
 	s_Data.IndexBuffer = std::make_shared<Buffer>("AS test triangle index buffer", BufferDesc(BufferUsage::BUFFER_USAGE_INDEX,
-		3, sizeof(WORD)), &indices);
+		6, sizeof(WORD)), &indices);*/
 
-	/*Model model = ResourceLoader::LoadGLTF("Resources/Models/Sponza_OLD/Sponza.gltf");
+	Model model = ResourceLoader::LoadGLTF("Resources/Models/Sponza_OLD/Sponza.gltf");
 	s_Data.VertexBuffer = model.VertexBuffer;
-	s_Data.IndexBuffer = model.IndexBuffer;*/
+	s_Data.IndexBuffer = model.IndexBuffer;
 
 	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc = {};
 	geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
@@ -214,7 +216,7 @@ void Renderer::CreateBLAS()
 	geometryDesc.Triangles.VertexCount = s_Data.VertexBuffer->GetBufferDesc().NumElements;
 	geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 	geometryDesc.Triangles.IndexBuffer = s_Data.IndexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
-	geometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R16_UINT;
+	geometryDesc.Triangles.IndexFormat = s_Data.IndexBuffer->GetBufferDesc().ElementSize == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 	geometryDesc.Triangles.IndexCount = s_Data.IndexBuffer->GetBufferDesc().NumElements;
 	geometryDesc.Triangles.Transform3x4 = 0;
 	geometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;

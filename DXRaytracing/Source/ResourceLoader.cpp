@@ -29,60 +29,63 @@ Model ResourceLoader::LoadGLTF(const std::string& filepath)
 
 	for (auto& mesh : tinygltf.meshes)
 	{
-		for (auto& primitive : mesh.primitives)
+		for (auto& prim : mesh.primitives)
 		{
-			uint32_t vertexPositionsIndex = primitive.attributes.find("POSITION")->second;
+			uint32_t vertexPosIndex = prim.attributes.find("POSITION")->second;
+			tinygltf::Accessor& posAccessor = tinygltf.accessors[vertexPosIndex];
+			totalVertexBufferSize += posAccessor.count * posAccessor.ByteStride(tinygltf.bufferViews[posAccessor.bufferView]);
 
-			tinygltf::Accessor& vertexAccessor = tinygltf.accessors[vertexPositionsIndex];
-			tinygltf::Accessor& indexAccessor = tinygltf.accessors[primitive.indices];
-
-			tinygltf::BufferView& vertexBufferView = tinygltf.bufferViews[vertexAccessor.bufferView];
-			tinygltf::BufferView& indexBufferView = tinygltf.bufferViews[indexAccessor.bufferView];
-
-			totalVertexBufferSize += vertexBufferView.byteLength;
-			totalIndexBufferSize += indexBufferView.byteLength;
+			uint32_t indicesIndex = prim.indices;
+			tinygltf::Accessor& indexAccessor = tinygltf.accessors[indicesIndex];
+			totalIndexBufferSize += indexAccessor.count * indexAccessor.ByteStride(tinygltf.bufferViews[indexAccessor.bufferView]);
 		}
 	}
 
-	unsigned char* vertexData = new unsigned char[totalVertexBufferSize];
-	unsigned char* indexData = new unsigned char[totalIndexBufferSize];
+	std::vector<unsigned char> vertexData;
+	std::vector<unsigned char> indexData;
 
-	std::size_t currentVertexDataOffset = 0;
-	std::size_t currentIndexDataOffset = 0;
+	vertexData.resize(totalVertexBufferSize);
+	indexData.resize(totalIndexBufferSize);
 
-	model.VertexBuffer = std::make_shared<Buffer>("Model vertex buffer", BufferDesc(BufferUsage::BUFFER_USAGE_VERTEX, totalVertexBufferSize / sizeof(glm::vec3), sizeof(glm::vec3)));
-	model.IndexBuffer = std::make_shared<Buffer>("Model index buffer", BufferDesc(BufferUsage::BUFFER_USAGE_INDEX, totalIndexBufferSize / sizeof(WORD), sizeof(WORD)));
+	std::size_t currentVertexByteOffset = 0;
+	std::size_t currentIndexByteOffset = 0;
 
 	for (auto& mesh : tinygltf.meshes)
 	{
-		for (auto& primitive : mesh.primitives)
+		for (auto& prim : mesh.primitives)
 		{
-			uint32_t vertexPositionsIndex = primitive.attributes.find("POSITION")->second;
+			// Copy vertex positions
+			uint32_t vertexPosIndex = prim.attributes.find("POSITION")->second;
+			tinygltf::Accessor& posAccessor = tinygltf.accessors[vertexPosIndex];
+			tinygltf::BufferView& posBufferView = tinygltf.bufferViews[posAccessor.bufferView];
+			tinygltf::Buffer& posBuffer = tinygltf.buffers[posBufferView.buffer];
 
-			tinygltf::Accessor& vertexAccessor = tinygltf.accessors[vertexPositionsIndex];
-			tinygltf::Accessor& indexAccessor = tinygltf.accessors[primitive.indices];
+			const unsigned char* pData = &posBuffer.data[0] + posBufferView.byteOffset + posAccessor.byteOffset;
+			ASSERT(posBufferView.byteOffset + posAccessor.byteOffset < posBuffer.data.size(), "Byte offset for attribute POSITION exceeded the total buffer size");
 
-			tinygltf::BufferView& vertexBufferView = tinygltf.bufferViews[vertexAccessor.bufferView];
+			std::size_t verticesByteSize = posAccessor.count * posAccessor.ByteStride(posBufferView);
+			memcpy(&vertexData[currentVertexByteOffset], pData, verticesByteSize);
+			currentVertexByteOffset += verticesByteSize;
+
+			// Copy indices
+			uint32_t indicesIndex = prim.indices;
+			tinygltf::Accessor& indexAccessor = tinygltf.accessors[indicesIndex];
 			tinygltf::BufferView& indexBufferView = tinygltf.bufferViews[indexAccessor.bufferView];
-
-			tinygltf::Buffer& vertexBuffer = tinygltf.buffers[vertexBufferView.buffer];
 			tinygltf::Buffer& indexBuffer = tinygltf.buffers[indexBufferView.buffer];
 
-			const unsigned char* vertexDataPtr = &vertexBuffer.data[0] + vertexBufferView.byteOffset;
-			memcpy(vertexData + currentVertexDataOffset, vertexDataPtr, vertexBufferView.byteLength);
-			currentVertexDataOffset += vertexBufferView.byteLength;
+			pData = &indexBuffer.data[0] + indexBufferView.byteOffset + indexAccessor.byteOffset;
+			ASSERT(indexBufferView.byteOffset + indexAccessor.byteOffset < indexBuffer.data.size(), "Byte offset for INDICES exceeded the total buffer size");
 
-			const unsigned char* indexDataPtr = &indexBuffer.data[0] + indexBufferView.byteOffset;
-			memcpy(indexData + currentIndexDataOffset, indexDataPtr, indexBufferView.byteLength);
-			currentIndexDataOffset += indexBufferView.byteLength;
+			std::size_t indicesByteSize = indexAccessor.count * indexAccessor.ByteStride(indexBufferView);
+			memcpy(&indexData[currentIndexByteOffset], pData, indicesByteSize);
+			currentIndexByteOffset += indicesByteSize;
 		}
 	}
 
-	model.VertexBuffer->SetBufferData(vertexData);
-	model.IndexBuffer->SetBufferData(indexData);
-
-	delete[] vertexData;
-	delete[] indexData;
+	model.VertexBuffer = std::make_shared<Buffer>("Model vertex buffer", BufferDesc(BufferUsage::BUFFER_USAGE_VERTEX,
+		totalVertexBufferSize / sizeof(glm::vec3), sizeof(glm::vec3)), &vertexData[0]);
+	model.IndexBuffer = std::make_shared<Buffer>("Model index buffer", BufferDesc(BufferUsage::BUFFER_USAGE_INDEX,
+		totalIndexBufferSize / sizeof(WORD), sizeof(WORD)), &indexData[0]);
 
 	return model;
 }

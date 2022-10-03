@@ -10,6 +10,7 @@ Scene::Scene()
 
 void Scene::Update(float deltaTime)
 {
+	m_SceneCamera.Update(deltaTime);
 }
 
 void Scene::Render()

@@ -12,7 +12,7 @@ struct DefaultRayPayload
 
 struct BuiltinIntersectAttribs
 {
-	uint2 barycentrics;
+	uint2 Barycentrics;
 };
 
 RWTexture2D<float4> output : register(u0);
@@ -30,16 +30,15 @@ void main()
 	float2 pixelCenter = (currentPixel + float2(0.5f, 0.5f)) / totalPixels;
 	float2 ndc = float2(2.0f, -2.0f) * pixelCenter + float2(-1.0f, 1.0f);
 
-	//float3 pixelRayDirection = ndc.x * wsCamU + ndc.y * wsCamV + wsCamZ;
-
+	float3 camForward = float3(ViewProjection[0][2], ViewProjection[1][2], ViewProjection[2][2]);
+	//float3 pixelRayDirection = ndc.x * camForward.x + ndc.y * camForward.y + camForward.z;
+	
 	RayDesc ray;
-	//ray.Origin = ViewOriginAndTanHalfFovY.xyz;
-	//ray.Direction = normalize((d.x * ViewProjection[0].xyz * ViewOriginAndTanHalfFovY.w * aspectRatio) -
-	//	(d.y * ViewProjection[1].xyz * ViewOriginAndTanHalfFovY.w) + ViewProjection[2].xyz);
-	//ray.Direction = normalize(pixelRayDirection);
-	//ray.Origin = ViewProjection[3].xyz;
 	ray.Origin = ViewOriginAndTanHalfFovY.xyz;
-	ray.Direction = normalize(float3(ndc.x, ndc.y, 1.0f));
+	ray.Direction = normalize((d.x * ViewProjection[0].xyz * ViewOriginAndTanHalfFovY.w * aspectRatio) -
+		(d.y * ViewProjection[1].xyz * ViewOriginAndTanHalfFovY.w) + ViewProjection[2].xyz);
+	//ray.Direction = normalize(float3(ndc.x, ndc.y, 1.0f));
+	//ray.Direction = normalize(pixelRayDirection);
 	ray.TMin = 0.0f;
 	ray.TMax = 1e+38f;
 
