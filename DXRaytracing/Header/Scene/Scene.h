@@ -9,6 +9,8 @@ public:
 	void Update(float deltaTime);
 	void Render();
 
+	void OnWindowResize(uint32_t width, uint32_t height);
+
 	const Camera& GetCamera() const { return m_SceneCamera; }
 
 private:

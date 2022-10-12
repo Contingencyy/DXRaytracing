@@ -1,6 +1,6 @@
 cbuffer ViewCB : register(b0)
 {
-	matrix ViewProjection;
+	matrix ViewProjAtOrigin;
 	float4 ViewOriginAndTanHalfFovY;
 	float2 Resolution;
 };
@@ -10,35 +10,25 @@ struct DefaultRayPayload
 	float3 Color;
 };
 
-struct BuiltinIntersectAttribs
-{
-	uint2 Barycentrics;
-};
-
 RWTexture2D<float4> output : register(u0);
 RaytracingAccelerationStructure SceneBVH : register(t0);
 
 [shader("raygeneration")]
 void main()
 {
-	uint2 currentPixel = DispatchRaysIndex().xy;
-	uint2 totalPixels = DispatchRaysDimensions().xy;
+	uint2 pixelIndex = DispatchRaysIndex().xy;
+	float2 xy = pixelIndex + 0.5f;
+	float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0f - 1.0f;
 
-	float2 d = ((currentPixel + 0.5f) / Resolution.xy) * 2.0f - 1.0f;
-	float aspectRatio = (Resolution.x / Resolution.y);
+	screenPos.y = -screenPos.y;
 
-	float2 pixelCenter = (currentPixel + float2(0.5f, 0.5f)) / totalPixels;
-	float2 ndc = float2(2.0f, -2.0f) * pixelCenter + float2(-1.0f, 1.0f);
+	float4 world = mul(float4(screenPos, 0.0f, 1.0f), ViewProjAtOrigin);
+	float aspectRatio = Resolution.x / Resolution.y;
 
-	float3 camForward = float3(ViewProjection[0][2], ViewProjection[1][2], ViewProjection[2][2]);
-	//float3 pixelRayDirection = ndc.x * camForward.x + ndc.y * camForward.y + camForward.z;
-	
 	RayDesc ray;
 	ray.Origin = ViewOriginAndTanHalfFovY.xyz;
-	ray.Direction = normalize((d.x * ViewProjection[0].xyz * ViewOriginAndTanHalfFovY.w * aspectRatio) -
-		(d.y * ViewProjection[1].xyz * ViewOriginAndTanHalfFovY.w) + ViewProjection[2].xyz);
-	//ray.Direction = normalize(float3(ndc.x, ndc.y, 1.0f));
-	//ray.Direction = normalize(pixelRayDirection);
+	//ray.Direction = normalize(world.xyz);
+	ray.Direction = normalize(float3(world.x * aspectRatio, world.y, world.z));
 	ray.TMin = 0.0f;
 	ray.TMax = 1e+38f;
 
@@ -46,6 +36,11 @@ void main()
 	
 	TraceRay(SceneBVH, RAY_FLAG_NONE, 0xFF,
 		0, 0, 0, ray, payload);
+	
+	output[pixelIndex] = float4(payload.Color, 1.0f);
 
-	output[currentPixel] = float4(payload.Color, 1.0f);
+	//output[pixelIndex] = world;
+	//output[pixelIndex] = float4(pixelIndex.x / Resolution.x, pixelIndex.y / Resolution.y, 0.0f, 1.0f);
+	//output[pixelIndex] = float4(abs(screenPos.xy), 0.0f, 1.0f);
+	//output[pixelIndex] = float4(abs(ray.Direction), 1.0f);
 }

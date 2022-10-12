@@ -30,11 +30,12 @@ void PipelineState::CreateRootSignatures()
 	// Global Root Signature
 	// This is a root signature that is shared across all raytracing shaders invoked during a DispatchRays() call.
 	{
-		//CD3DX12_DESCRIPTOR_RANGE1 descriptorRanges[1] = {};
-		//descriptorRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
-
+		//CD3DX12_DESCRIPTOR_RANGE descriptorRange[3] = {};
+		//descriptorRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, 0); // View constant buffer
+		//descriptorRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, 2); // Output
+		//descriptorRange[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, 7); // Acceleration structure
 		//CD3DX12_ROOT_PARAMETER rootParameters[1] = {};
-		//rootParameters[0].InitAsConstants(16, 0, 0); // Viewport constant
+		//rootParameters[0].InitAsDescriptorTable(3, &descriptorRange[0]);
 		//CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
 
 		//ComPtr<ID3DBlob> blob;
@@ -46,18 +47,29 @@ void PipelineState::CreateRootSignatures()
 	// Local Root Signature
 	// This is a root signature that enables a shader to have unique arguments that come from shader tables.
 	{
-		CD3DX12_DESCRIPTOR_RANGE descriptorRange[3] = {};
-		descriptorRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, 0); // View constant buffer
-		descriptorRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, 2); // Output
-		descriptorRange[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, 7); // Acceleration structure
+		CD3DX12_DESCRIPTOR_RANGE descriptorRanges[6] = {};
+		descriptorRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, 1); // View constant buffer
+		descriptorRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, 3); // Output
+		descriptorRanges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, 11); // Acceleration structure
+		descriptorRanges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1, 5); // Vertex buffer
+		descriptorRanges[4].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 2, 6); // Index buffer
+		descriptorRanges[5].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 3, 4); // Base color texture
+		
 		CD3DX12_ROOT_PARAMETER rootParameters[1] = {};
-		rootParameters[0].InitAsDescriptorTable(3, &descriptorRange[0]);
+		rootParameters[0].InitAsDescriptorTable(6, &descriptorRanges[0]);
+
 		CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
 		localRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
 		ComPtr<ID3DBlob> blob;
 		ComPtr<ID3DBlob> error;
-		DX_CALL(D3D12SerializeRootSignature(&localRootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &blob, &error), error ? static_cast<wchar_t*>(error->GetBufferPointer()) : nullptr);
+
+		HRESULT hr = D3D12SerializeRootSignature(&localRootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &blob, &error);
+		if (!SUCCEEDED(hr))
+		{
+			ASSERT(false, static_cast<const char*>(error->GetBufferPointer()));
+		}
+
 		DX_CALL(device->GetD3D12Device()->CreateRootSignature(1, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(&m_LocalRootSignature)));
 	}
 }
@@ -129,7 +141,7 @@ void PipelineState::CreateStateObject(const std::string& name, const D3D12_SHADE
 	auto localRootSignature = raytracingPipeline.CreateSubobject<CD3DX12_LOCAL_ROOT_SIGNATURE_SUBOBJECT>();
 	localRootSignature->SetRootSignature(m_LocalRootSignature.Get());
 
-	// Shader association
+	//// Shader association
 	auto rootSignatureAssociation = raytracingPipeline.CreateSubobject<CD3DX12_SUBOBJECT_TO_EXPORTS_ASSOCIATION_SUBOBJECT>();
 	const wchar_t* rootSigExports[] = { L"RayGenShader_Default", L"HitGroupTriangle_Default", L"MissShader_Default" };
 	rootSignatureAssociation->AddExports(rootSigExports, 3);
@@ -137,8 +149,8 @@ void PipelineState::CreateStateObject(const std::string& name, const D3D12_SHADE
 
 	// Global root signature
 	// This is a root signature that is shared across all raytracing shaders invoked during a DispatchRays() call.
-	auto globalRootSignature = raytracingPipeline.CreateSubobject<CD3DX12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT>();
-	globalRootSignature->SetRootSignature(m_GlobalRootSignature.Get());
+	/*auto globalRootSignature = raytracingPipeline.CreateSubobject<CD3DX12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT>();
+	globalRootSignature->SetRootSignature(m_GlobalRootSignature.Get());*/
 
 	// Pipeline config
 	// Defines the maximum TraceRay() recursion depth.

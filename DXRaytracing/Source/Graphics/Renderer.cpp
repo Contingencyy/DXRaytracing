@@ -32,9 +32,10 @@ struct RendererInternalData
 	std::unique_ptr<Buffer> BLASScratchBuffer;
 	std::unique_ptr<Buffer> BLASBuffer;
 
-	// Test Vertex and index buffer
+	// Test Vertex and index buffer, texture
 	std::shared_ptr<Buffer> VertexBuffer;
 	std::shared_ptr<Buffer> IndexBuffer;
+	std::shared_ptr<Texture> BaseColorTexture;
 
 	std::unique_ptr<RenderPass> RenderPass;
 
@@ -75,9 +76,18 @@ void Renderer::Finalize()
 void Renderer::BeginScene(const Camera& sceneCamera)
 {
 	// Set view data and view constant buffer data
-	s_Data.ViewData.ViewProjection = sceneCamera.GetViewProjection();
-	s_Data.ViewData.ViewOriginAndTanHalfFovY = glm::vec4(s_Data.ViewData.ViewProjection[3][0],
-		s_Data.ViewData.ViewProjection[3][1], s_Data.ViewData.ViewProjection[3][2], 1.0f);
+	glm::mat4 viewAtOrigin = sceneCamera.GetViewMatrix();
+	s_Data.ViewData.ViewOriginAndTanHalfFovY = glm::vec4(viewAtOrigin[3][0],
+		viewAtOrigin[3][1], viewAtOrigin[3][2], 1.0f);
+
+	viewAtOrigin[3][0] = 0.0f;
+	viewAtOrigin[3][1] = 0.0f;
+	viewAtOrigin[3][2] = 0.0f;
+
+	glm::mat4 projection = sceneCamera.GetProjectionMatrix();
+	glm::mat4 projectionToWorld = projection * viewAtOrigin;
+
+	s_Data.ViewData.ViewProjection = projectionToWorld;
 	s_Data.ViewData.Resolution = glm::vec2(s_Data.Resolution.x, s_Data.Resolution.y);
 
 	s_Data.ViewConstantBuffer->SetBufferData(&s_Data.ViewData);
@@ -188,26 +198,42 @@ void Renderer::CreateRenderPasses()
 void Renderer::CreateBLAS()
 {
 	// Set test data for vertex and index buffer
-	/*glm::vec3 vertices[4] = {
+	/*glm::vec3 vertices[8] = {
 		{ -0.5f, 0.5f, 1.0f },
 		{ 0.5f, 0.5f, 1.0f },
 		{ 0.5f, -0.5f, 1.0f },
 		{ -0.5f, -0.5f, 1.0f },
+		{ -0.5f, 0.5f, 2.0f },
+		{ 0.5f, 0.5f, 2.0f },
+		{ 0.5f, -0.5f, 2.0f },
+		{ -0.5f, -0.5f, 2.0f },
 	};
 
-	WORD indices[6] = {
+	WORD indices[24] = {
 		0, 1, 2,
-		2, 3, 0
+		2, 3, 0,
+		1, 5, 6,
+		6, 2, 1,
+		5, 4, 7,
+		7, 6, 5,
+		4, 0, 3,
+		3, 7, 4,
 	};
 
 	s_Data.VertexBuffer = std::make_shared<Buffer>("AS test triangle vertex buffer", BufferDesc(BufferUsage::BUFFER_USAGE_VERTEX,
-		4, sizeof(glm::vec3)), &vertices);
+		8, sizeof(glm::vec3)), &vertices);
 	s_Data.IndexBuffer = std::make_shared<Buffer>("AS test triangle index buffer", BufferDesc(BufferUsage::BUFFER_USAGE_INDEX,
-		6, sizeof(WORD)), &indices);*/
+		24, sizeof(WORD)), &indices);*/
 
-	Model model = ResourceLoader::LoadGLTF("Resources/Models/Sponza_OLD/Sponza.gltf");
+	/*Model model = ResourceLoader::LoadGLTF("Resources/Models/Sponza_OLD/Sponza.gltf");
 	s_Data.VertexBuffer = model.VertexBuffer;
 	s_Data.IndexBuffer = model.IndexBuffer;
+	s_Data.BaseColorTexture = model.Textures[0];*/
+
+	Model model = ResourceLoader::LoadGLTF("Resources/Models/DamagedHelmet/DamagedHelmet.gltf");
+	s_Data.VertexBuffer = model.VertexBuffer;
+	s_Data.IndexBuffer = model.IndexBuffer;
+	s_Data.BaseColorTexture = model.Textures[0];
 
 	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc = {};
 	geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;

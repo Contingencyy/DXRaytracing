@@ -72,6 +72,7 @@ void Application::OnWindowResize(uint32_t width, uint32_t height)
 	width = std::max(width, 1u);
 	height = std::max(height, 1u);
 
+	m_Scene->OnWindowResize(width, height);
 	Renderer::OnWindowResize(width, height);
 }
 
