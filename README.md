@@ -1,2 +1,2 @@
 # DXRaytracing
-This project is currently used for research in my current study project.
+This project was used to research how the DirectX Raytracing (DXR) API works for the Descent Raytraced project.
